@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     widgets::{Block, Borders, Padding, Paragraph, Row, Table, Widget},
     Frame,
 };
@@ -13,13 +13,15 @@ pub fn ui(f: &mut Frame, app: &App) {
         .style(Style::default())
         .title(app.name.as_str())
         .title_alignment(Alignment::Center);
-    f.render_widget(title_block, f.size());
+    let mut adjusted_frame_area = f.size();
+    adjusted_frame_area.height = adjusted_frame_area.height - 1;
+    f.render_widget(title_block, adjusted_frame_area);
 
     let form_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .margin(1)
-        .split(f.size());
+        .split(adjusted_frame_area);
 
     let info_layout = Layout::new(
         Direction::Vertical,
@@ -37,6 +39,22 @@ pub fn ui(f: &mut Frame, app: &App) {
     render_address(app, AddressKind::Contractor, info_layout[1], f);
     render_address(app, AddressKind::Client, info_layout[2], f);
     render_hourly_table(app, table_layout[0], f);
+
+    let err_msg_paragraph = Paragraph::new(app.status.msg.as_str())
+        .style(match app.status.status {
+            Some(s) => match s {
+                crate::data::status::StatuslineStatus::Error => Style::new().fg(Color::Black).bg(Color::Red),
+                crate::data::status::StatuslineStatus::Warning => Style::new().fg(Color::Black).bg(Color::Yellow),
+            },
+            None => Style::new().reversed()
+        }).block(Block::new().padding(Padding::horizontal(2)));
+    adjusted_frame_area = Rect {
+        x: adjusted_frame_area.x,
+        y: adjusted_frame_area.y + adjusted_frame_area.height,
+        width: adjusted_frame_area.width,
+        height: 1
+    };
+    f.render_widget(err_msg_paragraph, adjusted_frame_area);
 }
 
 fn render_invoice_name(app: &App, parent: Rect, f: &mut Frame) {

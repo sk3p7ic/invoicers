@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::{
-    data::{application::App, table::HourlyRecord},
+    data::{application::App, status::{StatusMessage, StatuslineStatus}, table::HourlyRecord},
     ui::form::ui,
 };
 

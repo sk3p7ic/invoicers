@@ -9,6 +9,7 @@ mod tui;
 mod data {
     pub mod address;
     pub mod application;
+    pub mod status;
     pub mod table;
 }
 mod ui {

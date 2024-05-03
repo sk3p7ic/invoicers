@@ -125,7 +125,10 @@ fn render_hourly_table(app: &App, parent: Rect, f: &mut Frame) {
 
 fn get_style(idx: usize, app: &App) -> Style {
     Style::new().fg(if idx == app.selected_field {
-        Color::Blue
+        match app.editing {
+            true => Color::Cyan,
+            false => Color::Blue,
+        }
     } else {
         Color::White
     })

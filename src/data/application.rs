@@ -1,4 +1,7 @@
+use std::borrow::BorrowMut;
+
 use chrono::Datelike;
+use crossterm::event::KeyCode;
 
 use super::{
     address::{Address, AddressKind},
@@ -14,6 +17,7 @@ pub struct App {
     pub hours: HourlyTable,
 
     pub selected_field: usize,
+    pub editing: bool,
 }
 
 impl App {
@@ -24,6 +28,7 @@ impl App {
             addr_contractor: Address::new(AddressKind::Contractor),
             hours: HourlyTable::default(),
             selected_field: 0,
+            editing: false,
         }
     }
 
@@ -40,5 +45,39 @@ impl App {
 
     pub fn decr_selected_field(&mut self) {
         self.selected_field = self.selected_field.checked_sub(1).unwrap_or(N_FIELDS);
+    }
+
+    pub fn edit_selected_field(&mut self, kc: KeyCode) {
+        match kc {
+            KeyCode::Esc => self.editing = false,
+            KeyCode::Tab => self.incr_selected_field(),
+            KeyCode::BackTab => self.decr_selected_field(),
+            _ => {
+                match self.selected_field {
+                    0 => Self::edit_field(self.name.borrow_mut(), kc),
+                    1 => Self::edit_field(self.addr_contractor.name.borrow_mut(), kc),
+                    2 => Self::edit_field(self.addr_contractor.street_num.borrow_mut(), kc),
+                    3 => Self::edit_field(self.addr_contractor.city.borrow_mut(), kc),
+                    4 => Self::edit_field(self.addr_contractor.state.borrow_mut(), kc),
+                    5 => Self::edit_field(self.addr_contractor.zip.borrow_mut(), kc),
+                    6 => Self::edit_field(self.addr_client.name.borrow_mut(), kc),
+                    7 => Self::edit_field(self.addr_client.street_num.borrow_mut(), kc),
+                    8 => Self::edit_field(self.addr_client.city.borrow_mut(), kc),
+                    9 => Self::edit_field(self.addr_client.state.borrow_mut(), kc),
+                    10 => Self::edit_field(self.addr_client.zip.borrow_mut(), kc),
+                    _ => unreachable!(""),
+                };
+            }
+        }
+    }
+
+    fn edit_field(field: &mut String, kc: KeyCode) {
+        match kc {
+            KeyCode::Backspace => {
+                let _ = field.pop();
+            }
+            KeyCode::Char(c) => field.push(c),
+            _ => {}
+        };
     }
 }

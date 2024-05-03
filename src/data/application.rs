@@ -2,6 +2,7 @@ use std::borrow::BorrowMut;
 
 use chrono::Datelike;
 use crossterm::event::KeyCode;
+use enum_iterator::{next_cycle, previous_cycle, Sequence};
 
 use super::{
     address::{Address, AddressKind},
@@ -10,13 +11,28 @@ use super::{
 
 const N_FIELDS: usize = 11;
 
+#[derive(PartialEq, Sequence)]
+pub enum AppField {
+    Name,
+    AddrContractorName,
+    AddrContractorStreetNum,
+    AddrContractorCity,
+    AddrContractorState,
+    AddrContractorZip,
+    AddrClientName,
+    AddrClientStreetNum,
+    AddrClientCity,
+    AddrClientState,
+    AddrClientZip,
+}
+
 pub struct App {
     pub name: String,
     pub addr_client: Address,
     pub addr_contractor: Address,
     pub hours: HourlyTable,
 
-    pub selected_field: usize,
+    pub selected_field: AppField,
     pub editing: bool,
 }
 
@@ -27,7 +43,7 @@ impl App {
             addr_client: Address::new(AddressKind::Client),
             addr_contractor: Address::new(AddressKind::Contractor),
             hours: HourlyTable::default(),
-            selected_field: 0,
+            selected_field: AppField::Name,
             editing: false,
         }
     }
@@ -40,11 +56,11 @@ impl App {
     }
 
     pub fn incr_selected_field(&mut self) {
-        self.selected_field = (self.selected_field + 1) % (N_FIELDS + 1);
+        self.selected_field = next_cycle(&self.selected_field);
     }
 
     pub fn decr_selected_field(&mut self) {
-        self.selected_field = self.selected_field.checked_sub(1).unwrap_or(N_FIELDS);
+        self.selected_field = previous_cycle(&self.selected_field);
     }
 
     pub fn edit_selected_field(&mut self, kc: KeyCode) {
@@ -54,18 +70,17 @@ impl App {
             KeyCode::BackTab => self.decr_selected_field(),
             _ => {
                 match self.selected_field {
-                    0 => Self::edit_field(self.name.borrow_mut(), kc),
-                    1 => Self::edit_field(self.addr_contractor.name.borrow_mut(), kc),
-                    2 => Self::edit_field(self.addr_contractor.street_num.borrow_mut(), kc),
-                    3 => Self::edit_field(self.addr_contractor.city.borrow_mut(), kc),
-                    4 => Self::edit_field(self.addr_contractor.state.borrow_mut(), kc),
-                    5 => Self::edit_field(self.addr_contractor.zip.borrow_mut(), kc),
-                    6 => Self::edit_field(self.addr_client.name.borrow_mut(), kc),
-                    7 => Self::edit_field(self.addr_client.street_num.borrow_mut(), kc),
-                    8 => Self::edit_field(self.addr_client.city.borrow_mut(), kc),
-                    9 => Self::edit_field(self.addr_client.state.borrow_mut(), kc),
-                    10 => Self::edit_field(self.addr_client.zip.borrow_mut(), kc),
-                    _ => unreachable!(""),
+                    AppField::Name => Self::edit_field(self.name.borrow_mut(), kc),
+                    AppField::AddrContractorName => Self::edit_field(self.addr_contractor.name.borrow_mut(), kc),
+                    AppField::AddrContractorStreetNum => Self::edit_field(self.addr_contractor.street_num.borrow_mut(), kc),
+                    AppField::AddrContractorCity => Self::edit_field(self.addr_contractor.city.borrow_mut(), kc),
+                    AppField::AddrContractorState => Self::edit_field(self.addr_contractor.state.borrow_mut(), kc),
+                    AppField::AddrContractorZip => Self::edit_field(self.addr_contractor.zip.borrow_mut(), kc),
+                    AppField::AddrClientName => Self::edit_field(self.addr_client.name.borrow_mut(), kc),
+                    AppField::AddrClientStreetNum => Self::edit_field(self.addr_client.street_num.borrow_mut(), kc),
+                    AppField::AddrClientCity => Self::edit_field(self.addr_client.city.borrow_mut(), kc),
+                    AppField::AddrClientState => Self::edit_field(self.addr_client.state.borrow_mut(), kc),
+                    AppField::AddrClientZip => Self::edit_field(self.addr_client.zip.borrow_mut(), kc),
                 };
             }
         }

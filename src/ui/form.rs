@@ -5,7 +5,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::data::{address::AddressKind, application::App};
+use crate::data::{address::AddressKind, application::{App, AppField}};
 
 pub fn ui(f: &mut Frame, app: &App) {
     let title_block = Block::default()
@@ -41,7 +41,7 @@ pub fn ui(f: &mut Frame, app: &App) {
 
 fn render_invoice_name(app: &App, parent: Rect, f: &mut Frame) {
     let name = Paragraph::new(app.name.as_str())
-        .style(get_style(0, app))
+        .style(get_style(&AppField::Name, app))
         .block(Block::bordered().title("Invoice Name / Number"));
     f.render_widget(name, parent);
 }
@@ -50,9 +50,21 @@ fn render_address(app: &App, kind: AddressKind, parent: Rect, f: &mut Frame) {
     let address_block = Block::bordered().title(kind.as_str());
     f.render_widget(address_block, parent);
 
-    let idx_offset = match kind {
-        AddressKind::Client => 5,
-        AddressKind::Contractor => 0,
+    let app_fields = match kind {
+        AddressKind::Client => &[
+            AppField::AddrClientName,
+            AppField::AddrClientStreetNum,
+            AppField::AddrClientCity,
+            AppField::AddrClientState,
+            AppField::AddrClientZip,
+        ],
+        AddressKind::Contractor => &[
+            AppField::AddrContractorName,
+            AppField::AddrContractorStreetNum,
+            AppField::AddrContractorCity,
+            AppField::AddrContractorState,
+            AppField::AddrContractorZip,
+        ]
     };
 
     let address_layout = Layout::new(
@@ -67,21 +79,21 @@ fn render_address(app: &App, kind: AddressKind, parent: Rect, f: &mut Frame) {
     .split(parent);
 
     let name = Paragraph::new(app.get_addr_from_kind(kind).name.as_str())
-        .style(get_style(1 + idx_offset, app))
+        .style(get_style(&app_fields[0], app))
         .block(Block::bordered().title("Name"));
     f.render_widget(name, address_layout[0]);
 
     let street_num = Paragraph::new(app.get_addr_from_kind(kind).street_num.as_str())
-        .style(get_style(2 + idx_offset, app))
+        .style(get_style(&app_fields[1], app))
         .block(Block::bordered().title("Street Number"));
     let city = Paragraph::new(app.get_addr_from_kind(kind).city.as_str())
-        .style(get_style(3 + idx_offset, app))
+        .style(get_style(&app_fields[2], app))
         .block(Block::bordered().title("City"));
     let state = Paragraph::new(app.get_addr_from_kind(kind).state.as_str())
-        .style(get_style(4 + idx_offset, app))
+        .style(get_style(&app_fields[3], app))
         .block(Block::bordered().title("State"));
     let zip = Paragraph::new(app.get_addr_from_kind(kind).zip.as_str())
-        .style(get_style(5 + idx_offset, app))
+        .style(get_style(&app_fields[4], app))
         .block(Block::bordered().title("Zip"));
 
     f.render_widget(street_num, address_layout[1]);
@@ -123,8 +135,8 @@ fn render_hourly_table(app: &App, parent: Rect, f: &mut Frame) {
     f.render_widget(hours_table, hours_layout[0])
 }
 
-fn get_style(idx: usize, app: &App) -> Style {
-    Style::new().fg(if idx == app.selected_field {
+fn get_style(relative_field: &AppField, app: &App) -> Style {
+    Style::new().fg(if relative_field == &app.selected_field {
         match app.editing {
             true => Color::Cyan,
             false => Color::Blue,

@@ -16,20 +16,27 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title_block, f.size());
 
     let form_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3),
-            Constraint::Fill(1),
-            Constraint::Fill(1),
-            Constraint::Fill(2),
-        ])
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .margin(1)
         .split(f.size());
 
-    render_invoice_name(app, form_layout[0], f);
-    render_address(app, AddressKind::Contractor, form_layout[1], f);
-    render_address(app, AddressKind::Client, form_layout[2], f);
-    render_hourly_table(app, form_layout[3], f);
+    let info_layout = Layout::new(
+        Direction::Vertical,
+        [
+            Constraint::Length(3),
+            Constraint::Fill(1),
+            Constraint::Fill(1),
+        ],
+    )
+    .split(form_layout[0]);
+    let table_layout =
+        Layout::new(Direction::Vertical, [Constraint::Percentage(100)]).split(form_layout[1]);
+
+    render_invoice_name(app, info_layout[0], f);
+    render_address(app, AddressKind::Contractor, info_layout[1], f);
+    render_address(app, AddressKind::Client, info_layout[2], f);
+    render_hourly_table(app, table_layout[0], f);
 }
 
 fn render_invoice_name(app: &App, parent: Rect, f: &mut Frame) {
@@ -44,24 +51,18 @@ fn render_address(app: &App, kind: AddressKind, parent: Rect, f: &mut Frame) {
 
     let address_layout = Layout::new(
         Direction::Vertical,
-        [Constraint::Percentage(50), Constraint::Percentage(50)],
+        [
+            Constraint::Length(3),
+            Constraint::Length(3),
+            Constraint::Length(3),
+        ],
     )
     .margin(2)
     .split(parent);
 
     let name = Paragraph::new(app.get_addr_from_kind(kind).name.as_str())
         .block(Block::bordered().title("Name"));
-
-    let inner_address_layout = Layout::new(
-        Direction::Horizontal,
-        [
-            Constraint::Percentage(50),
-            Constraint::Fill(2),
-            Constraint::Fill(1),
-            Constraint::Fill(1),
-        ],
-    )
-    .split(address_layout[1]);
+    f.render_widget(name, address_layout[0]);
 
     let street_num = Paragraph::new(app.get_addr_from_kind(kind).street_num.as_str())
         .block(Block::bordered().title("Street Number"));
@@ -72,12 +73,21 @@ fn render_address(app: &App, kind: AddressKind, parent: Rect, f: &mut Frame) {
     let zip = Paragraph::new(app.get_addr_from_kind(kind).zip.as_str())
         .block(Block::bordered().title("Zip"));
 
-    f.render_widget(street_num, inner_address_layout[0]);
-    f.render_widget(city, inner_address_layout[1]);
-    f.render_widget(state, inner_address_layout[2]);
-    f.render_widget(zip, inner_address_layout[3]);
+    f.render_widget(street_num, address_layout[1]);
 
-    f.render_widget(name, address_layout[0]);
+    let inner_address_layout = Layout::new(
+        Direction::Horizontal,
+        [
+            Constraint::Fill(2),
+            Constraint::Fill(1),
+            Constraint::Fill(1),
+        ],
+    )
+    .split(address_layout[2]);
+
+    f.render_widget(city, inner_address_layout[0]);
+    f.render_widget(state, inner_address_layout[1]);
+    f.render_widget(zip, inner_address_layout[2]);
 }
 
 fn render_hourly_table(app: &App, parent: Rect, f: &mut Frame) {

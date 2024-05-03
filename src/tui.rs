@@ -6,36 +6,83 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 
+use crate::{
+    data::{application::App, table::HourlyRecord},
+    ui::form::ui,
+};
+
 pub fn start_tui() -> io::Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
+    let mut app = App::new();
 
-    let mut should_quit = false;
-    while !should_quit {
-        terminal.draw(ui)?;
-        should_quit = handle_events()?;
+    app.hours.records = vec![
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+    ];
+
+    run_app(&mut terminal, &mut app)
+}
+
+fn run_app<B: Backend>(term: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
+    loop {
+        term.draw(|f| ui(f, app))?;
+        match handle_events(app) {
+            Ok(do_quit) => match do_quit {
+                true => break,
+                false => {}
+            },
+            Err(e) => return Err(e),
+        }
     }
     Ok(())
 }
 
-fn handle_events() -> io::Result<bool> {
+fn handle_events(app: &mut App) -> io::Result<bool> {
     match event::read()? {
-        Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-            Ok(handle_key_press(key_event))
+        Event::Key(key_event) if key_event.kind == KeyEventKind::Press && !app.editing => {
+            Ok(handle_key_press(key_event, app))
+        }
+        Event::Key(key_event) if key_event.kind == KeyEventKind::Press && app.editing => {
+            handle_editing_press(key_event, app);
+            Ok(false)
         }
         _ => Ok(false),
     }
 }
 
-fn handle_key_press(key_event: KeyEvent) -> bool {
+fn handle_key_press(key_event: KeyEvent, app: &mut App) -> bool {
     match key_event.code {
         KeyCode::Char('q') => true,
-        _ => false,
+        kc => {
+            match kc {
+                KeyCode::Tab | KeyCode::Char('j') => app.incr_selected_field(),
+                KeyCode::BackTab | KeyCode::Char('k') => app.decr_selected_field(),
+                KeyCode::Enter | KeyCode::Char('i') => app.editing = true,
+                _ => {}
+            };
+            false
+        }
     }
 }
 
-fn ui(frame: &mut Frame) {
-    frame.render_widget(
-        Paragraph::new("Hello, world!").block(Block::bordered().title("Greeting")),
-        frame.size(),
-    );
+fn handle_editing_press(key_event: KeyEvent, app: &mut App) {
+    app.edit_selected_field(key_event.code);
 }

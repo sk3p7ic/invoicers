@@ -40,14 +40,20 @@ pub fn ui(f: &mut Frame, app: &App) {
 }
 
 fn render_invoice_name(app: &App, parent: Rect, f: &mut Frame) {
-    let name =
-        Paragraph::new(app.name.as_str()).block(Block::bordered().title("Invoice Name / Number"));
+    let name = Paragraph::new(app.name.as_str())
+        .style(get_style(0, app))
+        .block(Block::bordered().title("Invoice Name / Number"));
     f.render_widget(name, parent);
 }
 
 fn render_address(app: &App, kind: AddressKind, parent: Rect, f: &mut Frame) {
     let address_block = Block::bordered().title(kind.as_str());
     f.render_widget(address_block, parent);
+
+    let idx_offset = match kind {
+        AddressKind::Client => 5,
+        AddressKind::Contractor => 0,
+    };
 
     let address_layout = Layout::new(
         Direction::Vertical,
@@ -61,16 +67,21 @@ fn render_address(app: &App, kind: AddressKind, parent: Rect, f: &mut Frame) {
     .split(parent);
 
     let name = Paragraph::new(app.get_addr_from_kind(kind).name.as_str())
+        .style(get_style(1 + idx_offset, app))
         .block(Block::bordered().title("Name"));
     f.render_widget(name, address_layout[0]);
 
     let street_num = Paragraph::new(app.get_addr_from_kind(kind).street_num.as_str())
+        .style(get_style(2 + idx_offset, app))
         .block(Block::bordered().title("Street Number"));
     let city = Paragraph::new(app.get_addr_from_kind(kind).city.as_str())
+        .style(get_style(3 + idx_offset, app))
         .block(Block::bordered().title("City"));
     let state = Paragraph::new(app.get_addr_from_kind(kind).state.as_str())
+        .style(get_style(4 + idx_offset, app))
         .block(Block::bordered().title("State"));
     let zip = Paragraph::new(app.get_addr_from_kind(kind).zip.as_str())
+        .style(get_style(5 + idx_offset, app))
         .block(Block::bordered().title("Zip"));
 
     f.render_widget(street_num, address_layout[1]);
@@ -110,4 +121,12 @@ fn render_hourly_table(app: &App, parent: Rect, f: &mut Frame) {
     .header(Row::new(vec!["Description", "Rate", "Hours", "Total"]));
 
     f.render_widget(hours_table, hours_layout[0])
+}
+
+fn get_style(idx: usize, app: &App) -> Style {
+    Style::new().fg(if idx == app.selected_field {
+        Color::Blue
+    } else {
+        Color::White
+    })
 }

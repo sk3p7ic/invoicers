@@ -58,15 +58,22 @@ fn run_app<B: Backend>(term: &mut Terminal<B>, app: &mut App) -> io::Result<()> 
 fn handle_events(app: &mut App) -> io::Result<bool> {
     match event::read()? {
         Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-            Ok(handle_key_press(key_event))
+            Ok(handle_key_press(key_event, app))
         }
         _ => Ok(false),
     }
 }
 
-fn handle_key_press(key_event: KeyEvent) -> bool {
+fn handle_key_press(key_event: KeyEvent, app: &mut App) -> bool {
     match key_event.code {
         KeyCode::Char('q') => true,
-        _ => false,
+        kc => {
+            match kc {
+                KeyCode::Tab => app.incr_selected_field(),
+                KeyCode::BackTab => app.decr_selected_field(),
+                _ => {}
+            };
+            false
+        }
     }
 }

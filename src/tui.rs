@@ -6,11 +6,38 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 
-use crate::{data::application::App, ui::form::ui};
+use crate::{
+    data::{application::App, table::HourlyRecord},
+    ui::form::ui,
+};
 
 pub fn start_tui() -> io::Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     let mut app = App::new();
+
+    app.hours.records = vec![
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+        HourlyRecord {
+            desc: "Hours Worked".to_string(),
+            rate: 25.00,
+            hours: 40f32,
+        },
+    ];
+
     run_app(&mut terminal, &mut app)
 }
 

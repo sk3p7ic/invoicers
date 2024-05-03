@@ -1,15 +1,25 @@
+#[derive(Clone, Copy)]
 pub enum AddressKind {
     Client,
     Contractor,
 }
 
+impl AddressKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Client => "Client",
+            Self::Contractor => "Contractor",
+        }
+    }
+}
+
 pub struct Address {
-    kind: AddressKind,
-    name: String,
-    street_num: String,
-    city: String,
-    state: String,
-    zip: String,
+    pub kind: AddressKind,
+    pub name: String,
+    pub street_num: String,
+    pub city: String,
+    pub state: String,
+    pub zip: String,
 }
 
 impl Address {

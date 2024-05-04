@@ -1,7 +1,8 @@
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Stylize},
-    widgets::{Block, Borders, Padding, Paragraph, Row, Table, Widget},
+    style::{Color, Modifier, Style, Stylize},
+    text::Text,
+    widgets::{Block, Borders, Cell, Padding, Paragraph, Row, Table},
     Frame,
 };
 
@@ -135,22 +136,66 @@ fn render_hourly_table(app: &App, parent: Rect, f: &mut Frame) {
     let hours_block = Block::bordered().title("Hours Worked");
     f.render_widget(hours_block, parent);
 
-    let hours_layout = Layout::new(Direction::Vertical, [Constraint::Fill(1)])
+    let hours_layout = Layout::new(Direction::Vertical, [
+        Constraint::Fill(1), Constraint::Length(3)])
         .margin(1)
         .split(parent);
 
+    let hours_table_constraints = [
+        Constraint::Fill(1),
+        Constraint::Length(7),
+        Constraint::Length(7),
+        Constraint::Length(7),
+    ];
+
+    let hours_total_amount = app.hours.records.iter()
+        .map(|r| r.total())
+        .sum::<f32>();
+
     let hours_table = Table::new(
         app.hours.to_rows(),
-        [
-            Constraint::Fill(1),
-            Constraint::Length(7),
-            Constraint::Length(7),
-            Constraint::Length(7),
-        ],
-    )
-    .header(Row::new(vec!["Description", "Rate", "Hours", "Total"]));
+        &hours_table_constraints)
+        .header(Row::new(vec!["Description", "Rate", "Hours", "Total"]).style(
+            Style::new()
+                .add_modifier(Modifier::BOLD)
+                .add_modifier(Modifier::UNDERLINED)
+        ))
+        .footer(Row::new(vec![
+            Cell::new(""),
+            Cell::new(""),
+            Cell::new("Total:"),
+            Cell::from(Text::from(format!("${hours_total_amount}")).right_aligned())
+        ]))
+        .block(Block::new().borders(Borders::BOTTOM));
 
-    f.render_widget(hours_table, hours_layout[0])
+    f.render_widget(hours_table, hours_layout[0]);
+
+    let hours_footer_layout = Layout::new(Direction::Horizontal,
+        hours_table_constraints).split(hours_layout[1]);
+
+    let hours_footer_desc = Paragraph::new(app.hours.new_desc.as_str())
+        .style(get_style(&AppField::HoursDesc, app))
+        .block(Block::bordered().title("Description"));
+    let hours_footer_rate = Paragraph::new(app.hours.new_rate.as_str())
+        .style(get_style(&AppField::HoursRate, app))
+        .block(Block::bordered().title("Rate"));
+    let hours_footer_hours = Paragraph::new(app.hours.new_hours.as_str())
+        .style(get_style(&AppField::HoursHours, app))
+        .block(Block::bordered().title("Hours"));
+
+    let hours_submit_layout = Layout::new(Direction::Vertical, [Constraint::Fill(1)])
+        .horizontal_margin(1)
+        .split(hours_footer_layout[3]);
+    let hours_submit = Paragraph::new("Add")
+        .reversed()
+        .centered()
+        .style(get_btn_style(&AppField::HoursBtn, app))
+        .block(Block::new().padding(Padding::vertical(1)));
+
+    f.render_widget(hours_footer_desc, hours_footer_layout[0]);
+    f.render_widget(hours_footer_rate, hours_footer_layout[1]);
+    f.render_widget(hours_footer_hours, hours_footer_layout[2]);
+    f.render_widget(hours_submit, hours_submit_layout[0]);
 }
 
 fn get_style(relative_field: &AppField, app: &App) -> Style {
@@ -162,4 +207,16 @@ fn get_style(relative_field: &AppField, app: &App) -> Style {
     } else {
         Color::White
     })
+}
+
+fn get_btn_style(relative_field: &AppField, app: &App) -> Style {
+    Style::new().bg(if relative_field == &app.selected_field {
+        match app.editing {
+            true => Color::Green,
+            false => Color::Yellow
+        }
+    } else {
+        Color::White
+    })
+        .fg(Color::Black)
 }

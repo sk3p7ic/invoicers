@@ -21,22 +21,30 @@ pub enum AppField {
     AddrClientCity,
     AddrClientState,
     AddrClientZip,
+    HoursDesc,
+    HoursRate,
+    HoursHours,
+    HoursBtn
 }
 
 impl AppField {
     pub fn get_len(&self) -> u8 {
         match self {
-            AppField::Name => 16,
-            AppField::AddrContractorName => 32,
-            AppField::AddrContractorStreetNum => 32,
-            AppField::AddrContractorCity => 32,
-            AppField::AddrContractorState => 2,
-            AppField::AddrContractorZip => 5,
-            AppField::AddrClientName => 32,
-            AppField::AddrClientStreetNum => 32,
-            AppField::AddrClientCity => 32,
-            AppField::AddrClientState => 2,
-            AppField::AddrClientZip => 5,
+            Self::Name => 16,
+            Self::AddrContractorName => 32,
+            Self::AddrContractorStreetNum => 32,
+            Self::AddrContractorCity => 32,
+            Self::AddrContractorState => 2,
+            Self::AddrContractorZip => 5,
+            Self::AddrClientName => 32,
+            Self::AddrClientStreetNum => 32,
+            Self::AddrClientCity => 32,
+            Self::AddrClientState => 2,
+            Self::AddrClientZip => 5,
+            Self::HoursDesc => 32,
+            Self::HoursRate => 6,
+            Self::HoursHours => 6,
+            Self::HoursBtn => 0
         }
     }
 }
@@ -98,6 +106,21 @@ impl App {
                     AppField::AddrClientCity => Self::edit_field(&self.selected_field, self.addr_client.city.borrow_mut(), kc),
                     AppField::AddrClientState => Self::edit_field(&self.selected_field, self.addr_client.state.borrow_mut(), kc),
                     AppField::AddrClientZip => Self::edit_field(&self.selected_field, self.addr_client.zip.borrow_mut(), kc),
+                    AppField::HoursDesc => Self::edit_field(&self.selected_field, self.hours.new_desc.borrow_mut(), kc),
+                    AppField::HoursRate => Self::edit_field(&self.selected_field, self.hours.new_rate.borrow_mut(), kc),
+                    AppField::HoursBtn | AppField::HoursHours if kc == KeyCode::Enter => {
+                        let status = match self.hours.add_row() {
+                            Ok(_) => None,
+                            Err(_) => Some(StatusMessage {
+                                msg: String::from("Could not add record."),
+                                status: Some(StatuslineStatus::Error)
+                            })
+                        };
+                        self.selected_field = AppField::HoursDesc;
+                        status
+                    },
+                    AppField::HoursHours => Self::edit_field(&self.selected_field, self.hours.new_hours.borrow_mut(), kc),
+                    AppField::HoursBtn => None
                 }
             }
         };

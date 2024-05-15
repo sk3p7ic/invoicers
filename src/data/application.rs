@@ -41,7 +41,7 @@ impl AppField {
             Self::AddrClientCity => 32,
             Self::AddrClientState => 2,
             Self::AddrClientZip => 5,
-            Self::HoursDesc => 32,
+            Self::HoursDesc => 64,
             Self::HoursRate => 6,
             Self::HoursHours => 6,
             Self::HoursBtn => 0
